@@ -126,9 +126,22 @@ Page({
       desc: e.detail.value
     })
   },
+  normalizeCredit(value) {
+    const numeric = Number(value)
+    if (Number.isNaN(numeric)) {
+      return 0
+    }
+    const clamped = Math.max(0, Math.min(this.data.maxCredit, Math.round(numeric)))
+    return clamped
+  },
   onCreditInput(e) {
     this.setData({
-      credit: e.detail.value
+      credit: this.normalizeCredit(e.detail.value)
+    })
+  },
+  onCreditManualInput(e) {
+    this.setData({
+      credit: this.normalizeCredit(e.detail.value)
     })
   },
   onPresetChange(e){
