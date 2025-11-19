@@ -33,6 +33,19 @@
       </view>
     </view>
   </view>
-  <view bindtap="requestSubscribeMessage">接收服务通知</view>
-  
 </view>
+
+<view class="form-group_label">📬 服务通知</view>
+<view class="subscribe-card" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.05), 0 6px 20px 0 rgba(0, 0, 0, 0.05);">
+  <view class="subscribe-info">
+    <view class="subscribe-title">接收任务提醒</view>
+    <view class="subscribe-status">{{subscribeStatusText}}</view>
+  </view>
+  <button class="subscribe-btn"
+          loading="{{isCheckingSubscribe || isRequestingSubscribe}}"
+          disabled="{{subscribeStatus === 'accept' && !isCheckingSubscribe && !isRequestingSubscribe}}"
+          bindtap="handleSubscribeButtonTap">
+    {{subscribeButtonText}}
+  </button>
+</view>
+<view class="subscribe-tip">点击即可检测是否订阅，未授权会自动弹出提醒</view>

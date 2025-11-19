@@ -22,3 +22,54 @@
   background-repeat: no-repeat;
   background-size: contain;
 }
+
+.subscribe-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 12px;
+  background: #ffffff;
+  margin: 0 16px 12px;
+}
+
+.subscribe-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.subscribe-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.subscribe-status {
+  font-size: 14px;
+  color: #888;
+}
+
+.subscribe-btn {
+  min-width: 120px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #007aff;
+  color: #fff;
+  font-size: 14px;
+  border: none;
+}
+
+.subscribe-btn:disabled {
+  background: #a5d6ff;
+  color: #ffffff;
+}
+
+.subscribe-tip {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  margin-bottom: 16px;
+}
