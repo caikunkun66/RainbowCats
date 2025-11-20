@@ -25,6 +25,8 @@
 
   <view class="footer">
     <view class="reset" bindtap="resetItem">重置</view>
-    <view class="save" bindtap="saveItem">保存</view>
+    <view class="save {{isSaving ? 'disabled' : ''}}" bindtap="handleTap">
+      {{isSaving ? '提交中...' : '保存'}}
+    </view>
   </view>
 </view>

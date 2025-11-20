@@ -58,3 +58,7 @@
   color: white;
   background: #353535;
 }
+.save.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
