@@ -42,12 +42,13 @@ Page({
         })
 
         //确定任务关系并保存到本地
-        if(this.data.mission._openid === getApp().globalData._openidA){
+        const ownerOpenid = this.data.mission.ownerOpenid || this.data.mission._openid
+        if(ownerOpenid === getApp().globalData._openidA){
           this.setData({
             from: getApp().globalData.userA,
             to: getApp().globalData.userB,
           })
-        }else if(this.data.mission._openid === getApp().globalData._openidB){
+        }else if(ownerOpenid === getApp().globalData._openidB){
           this.setData({
             from: getApp().globalData.userB,
             to: getApp().globalData.userA,

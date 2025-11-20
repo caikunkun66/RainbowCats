@@ -79,6 +79,11 @@ Page({
     this.filterMission()
   },
 
+  getMissionOwnerOpenid(mission) {
+    if (!mission) return ''
+    return mission.ownerOpenid || mission._openid || ''
+  },
+
   //将任务划分为：完成，未完成
   filterMission(){
     let missionList = this.data.allMissions
@@ -87,7 +92,7 @@ Page({
       missionList = missionList.filter(item => (item.title || '').match(search))
     }
     if(filterOpenid){
-      missionList = missionList.filter(item => item._openid === filterOpenid)
+      missionList = missionList.filter(item => this.getMissionOwnerOpenid(item) === filterOpenid)
     }
 
     this.setData({
@@ -129,7 +134,7 @@ Page({
                 })
             }
 
-        }else if(mission._openid === openid.result){
+        }else if(this.getMissionOwnerOpenid(mission) === openid.result){
             //处理星标按钮点击事件
             if (index === 1) {
                 wx.cloud.callFunction({name: 'editStar', data: {_id: mission._id, list: getApp().globalData.collectionMissionList, value: !mission.star}})
@@ -179,7 +184,7 @@ Page({
     let loadingShown = false
     try {
       const openid = await wx.cloud.callFunction({name: 'getOpenId'})
-      if (mission._openid === openid.result) {
+      if (this.getMissionOwnerOpenid(mission) === openid.result) {
         wx.showToast({
           title: '不能完成自己的任务',
           icon: 'error',
@@ -195,7 +200,7 @@ Page({
       loadingShown = true
 
       await wx.cloud.callFunction({name: 'editAvailable', data: {_id: mission._id, value: false, list: getApp().globalData.collectionMissionList}})
-      await wx.cloud.callFunction({name: 'editCredit', data: {_openid: mission._openid, value: mission.credit, list: getApp().globalData.collectionUserList}})
+      await wx.cloud.callFunction({name: 'editCredit', data: {_openid: this.getMissionOwnerOpenid(mission), value: mission.credit, list: getApp().globalData.collectionUserList}})
 
       mission.available = false
       await this.onShow()

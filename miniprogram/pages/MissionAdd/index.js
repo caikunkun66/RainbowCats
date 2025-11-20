@@ -129,6 +129,40 @@ Page({
     ],
     list: getApp().globalData.collectionMissionList,
     isSaving: false,
+    ownerOptions: [],
+    selectedOwnerOpenid: '',
+    currentOpenid: '',
+  },
+
+  async onLoad() {
+    await this.initOwnerOptions()
+  },
+
+  async initOwnerOptions() {
+    const app = getApp()
+    const ownerOptions = [
+      {
+        name: app.globalData.userA,
+        openid: app.globalData._openidA,
+      },
+      {
+        name: app.globalData.userB,
+        openid: app.globalData._openidB,
+      },
+    ]
+    let currentOpenid = ''
+    try {
+      const {result} = await wx.cloud.callFunction({name: 'getOpenId'})
+      currentOpenid = result
+    } catch (error) {
+      console.error('[MissionAdd] initOwnerOptions failed to fetch openid:', error)
+    }
+    const defaultOwner = (currentOpenid && ownerOptions.find(item => item.openid === currentOpenid)?.openid) || ownerOptions[0]?.openid || ''
+    this.setData({
+      ownerOptions,
+      selectedOwnerOpenid: defaultOwner,
+      currentOpenid: currentOpenid || defaultOwner,
+    })
   },
 
   //数据输入填写表单
@@ -167,6 +201,11 @@ Page({
       desc: this.data.presets[e.detail.value].desc,
     })
   },
+  onOwnerChange(e) {
+    this.setData({
+      selectedOwnerOpenid: e.detail.value
+    })
+  },
 
   //保存任务
   async saveMission() {
@@ -203,12 +242,29 @@ Page({
       })
       return false
     }
+    if (!this.data.selectedOwnerOpenid) {
+      wx.showToast({
+        title: '请选择接收人',
+        icon: 'error',
+        duration: 2000
+      })
+      return false
+    }
     wx.showLoading({
         title: '提交中...',
         mask: true
     })
     try{
-        await wx.cloud.callFunction({name: 'addElement', data: this.data})
+        await wx.cloud.callFunction({
+          name: 'addElement',
+          data: {
+            list: this.data.list,
+            title: this.data.title,
+            desc: this.data.desc,
+            credit: this.data.credit,
+            targetOpenid: this.data.selectedOwnerOpenid,
+          }
+        })
         wx.showToast({
             title: '添加成功',
             icon: 'success',
@@ -239,6 +295,7 @@ Page({
       credit: 0,
       presetIndex: 0,
       list: getApp().globalData.collectionMissionList,
+      selectedOwnerOpenid: this.data.currentOpenid || this.data.ownerOptions[0]?.openid || '',
     })
   }
 })

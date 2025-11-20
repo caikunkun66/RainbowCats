@@ -62,3 +62,16 @@
   opacity: 0.5;
   pointer-events: none;
 }
+
+.owner-radios {
+  display: flex;
+  gap: 16px;
+}
+
+.owner-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #353535;
+}

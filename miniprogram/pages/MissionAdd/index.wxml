@@ -15,6 +15,15 @@
       <textarea class="form-cell_input" placeholder="任务是要做什么呢?" placeholder-class="form-cell_placeholder" bindinput="onDescInput" value="{{desc}}" />
     </view>
     <view class="form-cell">
+      <view class="form-cell_title">👥任务接收人</view>
+      <radio-group class="owner-radios" bindchange="onOwnerChange">
+        <label class="owner-radio" wx:for="{{ownerOptions}}" wx:key="openid">
+          <radio value="{{item.openid}}" checked="{{item.openid === selectedOwnerOpenid}}" />
+          <text class="owner-radio_label">{{item.name}}</text>
+        </label>
+      </radio-group>
+    </view>
+    <view class="form-cell">
       <view class="form-cell_title">💰积分奖励</view>
       <view class="credit-input-row">
         <slider class="credit-slider" min="0" max="{{maxCredit}}" block-size="15" block-color="#353535" activeColor="#ff5794" bindchange="onCreditInput" value="{{credit}}" show-value/>

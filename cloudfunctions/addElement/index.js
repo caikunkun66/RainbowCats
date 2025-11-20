@@ -9,9 +9,12 @@ const db_date =  db.serverDate()
 
 // 云函数入口函数
 exports.main = async (context) => {
+  const callerOpenid = cloud.getWXContext().OPENID
+  const ownerOpenid = context.targetOpenid || callerOpenid
   return await db.collection(context.list).add({
     data: {
-      _openid: cloud.getWXContext().OPENID,
+      _openid: callerOpenid,
+      ownerOpenid,
 
       date: db_date,
       credit: Number(context.credit),
