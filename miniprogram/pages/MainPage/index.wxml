@@ -10,22 +10,14 @@
     <view class="form-group" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.05), 0 6px 20px 0 rgba(0, 0, 0, 0.05);">
     <view class="form-cell">
         <view class="slide">
-        <view class="credit-info">
-            <view class="title">{{userA}}的积分：{{creditA}}</view>
-        </view>
-        <view class="credit-info_author">
-            <image style="position: absolute; width: 100%; bottom: 0;" mode="widthFix" src="../Mission/Images/MissionA.png"/>
-        </view>
+        <image class="credit-avatar" src="../Mission/Images/MissionA.png" mode="aspectFit" />
+        <view class="title">{{userA}}的积分：{{creditA}}</view>
         </view>
     </view>
     <view class="form-cell">
         <view class="slide">
-        <view class="credit-info">
-            <view class="title">{{userB}}的积分：{{creditB}}</view>
-        </view>
-        <view class="credit-info_author">
-            <image style="position: absolute; width: 100%; bottom: 0;" mode="widthFix" src="../Mission/Images/MissionB.png"/>
-        </view>
+        <image class="credit-avatar" src="../Mission/Images/MissionB.png" mode="aspectFit" />
+        <view class="title">{{userB}}的积分：{{creditB}}</view>
         </view>
     </view>
 </view>
