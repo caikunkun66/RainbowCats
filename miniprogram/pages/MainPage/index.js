@@ -15,6 +15,8 @@ Page({
         creditB: 0,
         userA: '',
         userB: '',
+        _openidA: getApp().globalData._openidA,
+        _openidB: getApp().globalData._openidB,
         subscribeTemplateId: SUBSCRIBE_TEMPLATE_ID,
         subscribeStatus: 'unknown',
         subscribeStatusText: SUBSCRIBE_STATUS_TEXT.unknown,
