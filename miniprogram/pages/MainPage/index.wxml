@@ -37,6 +37,27 @@
   </view>
 </view>
 
+<view class="form-group_label">👥 伙伴绑定</view>
+<view class="form-group" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.05), 0 6px 20px 0 rgba(0, 0, 0, 0.05);">
+  <view class="form-cell" wx:if="{{!partner}}">
+    <view class="slide">
+      <view class="title">未绑定伙伴</view>
+      <button class="bind-btn" size="mini" bindtap="showBindDialog">绑定伙伴</button>
+    </view>
+  </view>
+  <view class="form-cell" wx:if="{{partner}}">
+    <view class="slide">
+      <view class="title">已绑定：{{partner.nickname || '伙伴'}}</view>
+    </view>
+  </view>
+  <view class="form-cell" wx:if="{{inviteCode}}">
+    <view class="slide">
+      <view class="title">我的邀请码：{{inviteCode}}</view>
+      <button class="copy-btn" size="mini" bindtap="copyInviteCode">复制</button>
+    </view>
+  </view>
+</view>
+
 <view class="form-group_label">📬 服务通知</view>
 <view class="subscribe-card" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.05), 0 6px 20px 0 rgba(0, 0, 0, 0.05);">
   <view class="subscribe-info">

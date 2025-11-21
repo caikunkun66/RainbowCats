@@ -1,3 +1,5 @@
+const {api} = require('../../utils/api.js')
+
 Page({
     //增加消息接收与发送功能
     async handleTap() {
@@ -10,9 +12,8 @@ Page({
         })
         try {
             const saved = await this.saveMission()
-            if (saved) {
-                await this.sendSubscribeMessage()
-            }
+            // 注意：订阅消息功能已迁移到后端，这里不再需要调用云函数
+            // 如果需要发送订阅消息，应该通过后端 API 处理
         } catch (error) {
             console.error('[MissionAdd] handleTap failed:', error)
         } finally {
@@ -21,46 +22,6 @@ Page({
                 isSaving: false
             })
         }
-  },
-  //发送消息
-  sendSubscribeMessage(e) {
-      //调用云函数，
-      return new Promise((resolve, reject) => {
-          wx.cloud.callFunction({
-          name: 'information',
-          //data是用来传给云函数event的数据，你可以把你当前页面获取消息填写到服务通知里面
-          data: {
-              action: 'sendSubscribeMessage',
-              templateId: 'R5sHALA7TKs6jCyH_kwNr9l8vVfWKCU5cXQnFKWlwfA',//这里我就直接把模板ID传给云函数了
-              me:'Test_me',
-              name:'Test_activity',
-              _openid:'odPPg4mBicTjUXPX29A3KIzu5kYc'//填入自己的openid
-          },
-          success: res => {
-              console.warn('[云函数] [openapi] subscribeMessage.send 调用成功：', res)
-              wx.showModal({
-              title: '发送成功',
-              content: '请返回微信主界面查看',
-              showCancel: false,
-              })
-              wx.showToast({
-              title: '发送成功，请返回微信主界面查看',
-              })
-              this.setData({
-              subscribeMessageResult: JSON.stringify(res.result)
-              })
-              resolve(res)
-          },
-          fail: err => {
-              wx.showToast({
-              icon: 'none',
-              title: '调用失败',
-              })
-              console.error('[云函数] [openapi] subscribeMessage.send 调用失败：', err)
-              reject(err)
-          }
-          })
-      })
   },  
   //保存正在编辑的任务
   data: {
@@ -139,30 +100,46 @@ Page({
   },
 
   async initOwnerOptions() {
-    const app = getApp()
-    const ownerOptions = [
-      {
-        name: app.globalData.userA,
-        openid: app.globalData._openidA,
-      },
-      {
-        name: app.globalData.userB,
-        openid: app.globalData._openidB,
-      },
-    ]
-    let currentOpenid = ''
     try {
-      const {result} = await wx.cloud.callFunction({name: 'getOpenId'})
-      currentOpenid = result
+      const currentUser = await api.getCurrentUser()
+      const partnerResult = await api.getPartner()
+      
+      const ownerOptions = [
+        {
+          name: currentUser.nickname || '我',
+          openid: currentUser.openid,
+        },
+      ]
+      
+      if (partnerResult.partner) {
+        ownerOptions.push({
+          name: partnerResult.partner.nickname || '伙伴',
+          openid: partnerResult.partner.openid,
+        })
+      }
+      
+      const defaultOwner = currentUser.openid
+      this.setData({
+        ownerOptions,
+        selectedOwnerOpenid: defaultOwner,
+        currentOpenid: currentUser.openid,
+      })
     } catch (error) {
-      console.error('[MissionAdd] initOwnerOptions failed to fetch openid:', error)
+      console.error('[MissionAdd] initOwnerOptions failed:', error)
+      // 使用默认值
+      const app = getApp()
+      const ownerOptions = [
+        {
+          name: app.globalData.userA || '我',
+          openid: app.globalData._openidA || '',
+        },
+      ]
+      this.setData({
+        ownerOptions,
+        selectedOwnerOpenid: ownerOptions[0]?.openid || '',
+        currentOpenid: ownerOptions[0]?.openid || '',
+      })
     }
-    const defaultOwner = (currentOpenid && ownerOptions.find(item => item.openid === currentOpenid)?.openid) || ownerOptions[0]?.openid || ''
-    this.setData({
-      ownerOptions,
-      selectedOwnerOpenid: defaultOwner,
-      currentOpenid: currentOpenid || defaultOwner,
-    })
   },
 
   //数据输入填写表单
@@ -218,7 +195,7 @@ Page({
       })
       return false
     }
-    if (this.data.title.length > 12) {
+    if (this.data.title.length > 120) {
       wx.showToast({
         title: '标题过长',
         icon: 'error',
@@ -226,7 +203,7 @@ Page({
       })
       return false
     }
-    if (this.data.desc.length > 100) {
+    if (this.data.desc.length > 500) {
       wx.showToast({
         title: '描述过长',
         icon: 'error',
@@ -250,21 +227,21 @@ Page({
       })
       return false
     }
+    
     wx.showLoading({
         title: '提交中...',
         mask: true
     })
+    
     try{
-        await wx.cloud.callFunction({
-          name: 'addElement',
-          data: {
-            list: this.data.list,
-            title: this.data.title,
-            desc: this.data.desc,
-            credit: this.data.credit,
-            targetOpenid: this.data.selectedOwnerOpenid,
-          }
+        await api.createMission({
+          title: this.data.title,
+          description: this.data.desc,
+          reward_credit: this.data.credit,
+          owner_openid: this.data.selectedOwnerOpenid, // 后端支持通过 openid 指定 owner
         })
+        
+        wx.hideLoading()
         wx.showToast({
             title: '添加成功',
             icon: 'success',
@@ -276,14 +253,13 @@ Page({
         return true
     }catch(error){
         console.error('[MissionAdd] saveMission failed:', error)
+        wx.hideLoading()
         wx.showToast({
-            title: '提交失败',
+            title: error.message || '提交失败',
             icon: 'error',
             duration: 2000
         })
         return false
-    }finally{
-        wx.hideLoading()
     }
   },
 

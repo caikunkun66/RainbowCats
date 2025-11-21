@@ -1,19 +1,20 @@
+const {api} = require('../../utils/api.js')
+
 Page({
-  // 保存物品的 _id 和详细信息
+  // 保存订单的 id 和详细信息
   data: {
     _id: '',
-    item: null,
+    order: null,
     dateStr: '',
     timeStr: '',
     creditPercent: 0,
     from: '',
     to: '',
     maxCredit: getApp().globalData.maxItemCredit,
-    list: getApp().globalData.collectionStorageList,
   },
 
   onLoad(options) {
-    // 保存上一页传来的 _id 字段，用于查询物品
+    // 保存上一页传来的 id 字段，用于查询订单
     if (options.id !== undefined) {
       this.setData({
         _id: options.id
@@ -28,32 +29,43 @@ Page({
     return date
   },
 
-  // 根据 _id 值查询并显示物品
+  // 根据 id 值查询并显示订单
   async onShow() {
     if (this.data._id.length > 0) {
-      // 根据 _id 拿到物品
-      await wx.cloud.callFunction({name: 'getElementById', data: this.data}).then(data => {
-        // 将物品保存到本地，更新显示
+      try {
+        // 使用新 API 获取订单详情
+        const order = await api.getOrder(this.data._id)
+        
+        const createdDate = new Date(order.created_at)
         this.setData({
-          item: data.result.data[0],
-          dateStr: this.getDate(data.result.data[0].date).toDateString(),
-          timeStr: this.getDate(data.result.data[0].date).toTimeString(),
-          creditPercent: (data.result.data[0].credit / getApp().globalData.maxItemCredit) * 100,
+          order: order,
+          dateStr: createdDate.toLocaleDateString(),
+          timeStr: createdDate.toLocaleTimeString(),
+          creditPercent: order.item ? (order.item.cost_credit / this.data.maxCredit) * 100 : 0,
         })
 
-        //确定物品关系并保存到本地
-        if(this.data.item._openid === getApp().globalData._openidA){
-          this.setData({
-            from: getApp().globalData.userB,
-            to: getApp().globalData.userA,
-          })
-        }else if(this.data.item._openid === getApp().globalData._openidB){
-          this.setData({
-            from: getApp().globalData.userA,
-            to: getApp().globalData.userB,
-          })
+        // 确定订单关系：from 是上架者（商品创建者），to 是购买者
+        let fromName = '未知'
+        if (order.item && order.item.owner) {
+          fromName = order.item.owner.nickname || order.item.owner.name || '未知'
         }
-      })
+        
+        let toName = '未知'
+        if (order.user) {
+          toName = order.user.nickname || order.user.name || '未知'
+        }
+        
+        this.setData({
+          from: fromName,
+          to: toName,
+        })
+      } catch (error) {
+        console.error('[ItemDetail] onShow failed:', error)
+        wx.showToast({
+          title: '加载失败',
+          icon: 'error',
+        })
+      }
     }
   },
 })

@@ -5,14 +5,14 @@
   <view class="form-group" style="z-index: 0; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.05), 0 6px 20px 0 rgba(0, 0, 0, 0.05);">
     <view class="form-cell">
       <view class="item-info_title">📌 物品名称</view>
-      <view class="item-info_desc">{{item.title}}</view>
+      <view class="item-info_desc">{{order.item && order.item.name || order.item && order.item.title || ''}}</view>
     </view>
     <view class="form-cell">
       <view class="item-info_title">💡 获取途径</view>
       <view class="item-info_desc">此物品由{{from}}上架，由{{to}}购买。</view>
     </view>
     <view class="form-cell">
-      <view class="item-info_title">💰 物品价值：{{item.credit}} 积分</view>
+      <view class="item-info_title">💰 物品价值：{{order.item && order.item.cost_credit || order.credit_cost}} 积分</view>
       <progress percent="{{creditPercent}}" border-radius="5" font-size="8" duration="10" color="lightsalmon" active stroke-width="7"> 
         <view class="item-info_credit">{{maxCredit}} 积分</view>
       </progress>
@@ -23,7 +23,11 @@
     </view>
     <view class="form-cell">
       <view class="item-info_title">📝 物品详情</view>
-      <view class="item-info_desc">{{item.desc}}</view>
+      <view class="item-info_desc">{{order.item && order.item.description || order.item && order.item.desc || ''}}</view>
+    </view>
+    <view class="form-cell" wx:if="{{order.available !== undefined}}">
+      <view class="item-info_title">📦 使用状态</view>
+      <view class="item-info_desc">{{order.available ? '未使用' : '已使用'}}</view>
     </view>
   </view>
 </view>

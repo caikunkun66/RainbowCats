@@ -1,3 +1,5 @@
+const {api} = require('../../utils/api.js')
+
 Page({
   //增加提交锁定功能
   async handleTap() {
@@ -170,7 +172,11 @@ Page({
       mask: true
     })
     try {
-      await wx.cloud.callFunction({name: 'addElement', data: this.data})
+      await api.createItem({
+        name: this.data.title,
+        description: this.data.desc,
+        cost_credit: this.data.credit,
+      })
       wx.showToast({
         title: '添加成功',
         icon: 'success',
@@ -183,7 +189,7 @@ Page({
     } catch (error) {
       console.error('[MarketAdd] saveItem failed:', error)
       wx.showToast({
-        title: '提交失败',
+        title: error.message || '提交失败',
         icon: 'error',
         duration: 2000
       })
