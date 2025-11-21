@@ -9,10 +9,19 @@ class ItemController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user()->load('partner');
+
+        // 仅允许查看自己和已绑定伙伴的商品
+        $ownerIds = [$user->id];
+        if ($user->partner) {
+            $ownerIds[] = $user->partner->id;
+        }
+
         $items = Item::query()
             ->with('owner')
             // 返回 active 和 archived 状态的商品（不返回 draft）
             ->whereIn('status', ['active', 'archived'])
+            ->whereIn('owner_id', $ownerIds)
             ->when($request->query('keyword'), function ($query, $keyword) {
                 return $query->where('name', 'like', '%' . $keyword . '%');
             })

@@ -20,7 +20,15 @@ class MissionController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Mission::query();
+            $user = $request->user()->load('partner');
+
+            // 仅返回当前用户及其已绑定伙伴的任务
+            $ownerIds = [$user->id];
+            if ($user->partner) {
+                $ownerIds[] = $user->partner->id;
+            }
+
+            $query = Mission::query()->whereIn('owner_id', $ownerIds);
 
             if ($request->has('status')) {
                 $query->where('status', $request->query('status'));
