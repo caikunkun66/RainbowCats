@@ -21,6 +21,7 @@ class UserController extends Controller
             'role' => $user->role,
             'credit' => $user->credit,
             'invite_code' => $inviteCode,
+            'check_flag' => (bool) $user->check_flag,
         ]);
     }
 

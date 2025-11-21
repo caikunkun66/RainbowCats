@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\DispatchScheduledNotifications;
 use App\Console\Commands\ImportCloudData;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -15,6 +16,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         ImportCloudData::class,
+        DispatchScheduledNotifications::class,
     ];
 
     /**
@@ -25,7 +27,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('notifications:dispatch')->everyFiveMinutes();
+        $schedule->command('notifications:dispatch-due')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 
     /**

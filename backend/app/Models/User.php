@@ -17,6 +17,7 @@ class User extends Authenticatable
         'role',
         'credit',
         'settings',
+        'check_flag',
         'partner_id',
         'invite_code',
     ];
@@ -28,6 +29,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'settings' => 'array',
+        'check_flag' => 'boolean',
     ];
 
     public function missions()

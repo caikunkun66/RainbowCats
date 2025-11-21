@@ -5,16 +5,19 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MissionRequest;
 use App\Models\Mission;
 use App\Services\MissionService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class MissionController extends Controller
 {
     protected $service;
+    protected $notificationService;
 
-    public function __construct(MissionService $service)
+    public function __construct(MissionService $service, NotificationService $notificationService)
     {
         $this->service = $service;
+        $this->notificationService = $notificationService;
     }
 
     public function index(Request $request)
@@ -76,6 +79,9 @@ class MissionController extends Controller
             
             $mission = $this->service->createMission($owner, $data);
             $mission->load('owner');
+
+            $this->notificationService->notifyMissionCreated($request->user(), $mission);
+
             return response()->json($mission, Response::HTTP_CREATED);
         } catch (\Exception $e) {
             \Log::error('Mission store failed', [

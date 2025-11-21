@@ -16,11 +16,13 @@ class Mission extends Model
         'status',
         'star',
         'due_at',
+        'remind_at',
     ];
 
     protected $casts = [
         'star' => 'boolean',
         'due_at' => 'datetime',
+        'remind_at' => 'datetime',
     ];
 
     public function owner()

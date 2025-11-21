@@ -34,6 +34,7 @@ return [
         'miniapp' => [
             'app_id' => env('WECHAT_MINIAPP_APPID'),
             'secret' => env('WECHAT_MINIAPP_SECRET'),
+            'subscribe_template_id' => env('WECHAT_SUBSCRIBE_TEMPLATE'),
         ],
     ],
 
