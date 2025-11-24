@@ -25,6 +25,8 @@ Page({
         subscribeButtonText: '检测并授权',
         isCheckingSubscribe: false,
         isRequestingSubscribe: false,
+        subscribeKeep: false,
+        checkFlag: wx.getStorageSync('checkFlag') || false,
     },
 
     async onShow(){
@@ -48,7 +50,9 @@ Page({
                 creditA: currentUser.credit || 0,
                 creditB: partnerResult.partner ? (partnerResult.partner.credit || 0) : 0,
                 inviteCode: currentUser.invite_code || '',
+                checkFlag: !!currentUser.check_flag,
             })
+            this.syncCheckFlag(!!currentUser.check_flag)
             // 同步到全局缓存，供其他页面复用
             app.globalData.currentUser = currentUser
             app.globalData.partner = partnerResult.partner || null
@@ -138,15 +142,12 @@ Page({
         }
         this.setData({ isCheckingSubscribe: true })
         try {
-            const setting = await new Promise((resolve, reject) => {
-                wx.getSetting({
-                    withSubscriptions: true,
-                    success: resolve,
-                    fail: reject,
-                })
-            })
+            const setting = await this.fetchSubscribeSetting()
             const status = setting?.subscriptionsSetting?.itemSettings?.[SUBSCRIBE_TEMPLATE_ID] || 'unset'
+            const keep = this.extractKeepFromSetting(setting)
+            this.setData({ subscribeKeep: keep })
             this.updateSubscribeStatus(status)
+            await this.persistSubscribeStatus(status, keep, 'main_page_refresh')
             return status
         } catch (error) {
             console.error('[MainPage] refreshSubscribeStatus failed:', error)
@@ -155,6 +156,44 @@ Page({
         } finally {
             this.setData({ isCheckingSubscribe: false })
         }
+    },
+
+    fetchSubscribeSetting() {
+        return new Promise((resolve, reject) => {
+            wx.getSetting({
+                withSubscriptions: true,
+                success: resolve,
+                fail: reject,
+            })
+        })
+    },
+
+    extractKeepFromSetting(setting) {
+        const templateId = this.data.subscribeTemplateId
+        const itemSettings = setting?.subscriptionsSetting?.itemSettings || {}
+        return Object.prototype.hasOwnProperty.call(itemSettings, templateId)
+    },
+
+    async persistSubscribeStatus(status, keep, scene) {
+        try {
+            const response = await api.updateSubscribeStatus({
+                template_id: this.data.subscribeTemplateId,
+                status,
+                keep,
+                scene,
+            })
+            if (response && Object.prototype.hasOwnProperty.call(response, 'check_flag')) {
+                this.syncCheckFlag(response.check_flag)
+            }
+        } catch (error) {
+            console.warn('[MainPage] persistSubscribeStatus failed:', error)
+        }
+    },
+
+    syncCheckFlag(flag) {
+        const normalized = !!flag
+        wx.setStorageSync('checkFlag', normalized)
+        this.setData({ checkFlag: normalized })
     },
 
     async requestSubscribeMessage() {
@@ -171,8 +210,12 @@ Page({
                     fail: reject,
                 })
             })
-            const status = result?.[templateId]
+            const status = result?.[templateId] || 'unknown'
+            const setting = await this.fetchSubscribeSetting()
+            const keep = this.extractKeepFromSetting(setting)
+            this.setData({ subscribeKeep: keep })
             this.updateSubscribeStatus(status)
+            await this.persistSubscribeStatus(status, keep, 'main_page_request')
             if (status === 'accept') {
                 wx.showToast({ title: '已授权', icon: 'success' })
                 return true

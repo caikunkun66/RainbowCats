@@ -1,19 +1,25 @@
 const {api} = require('../../utils/api.js')
 
+const SUBSCRIBE_TEMPLATE_ID = 'z4n_ECy_C4oyEjONAPMOcXjR-aGO4a82mON85GwF7lY'
+
 Page({
     //增加消息接收与发送功能
     async handleTap() {
         if (this.data.isSaving) {
             return
         }
+        try {
+            await this.ensureSubscriptionPermission()
+        } catch (error) {
+            console.warn('[MissionAdd] ensureSubscriptionPermission failed:', error)
+        }
+
         this.data.isSaving = true
         this.setData({
             isSaving: true
         })
         try {
-            const saved = await this.saveMission()
-            // 注意：订阅消息功能已迁移到后端，这里不再需要调用云函数
-            // 如果需要发送订阅消息，应该通过后端 API 处理
+            await this.saveMission()
         } catch (error) {
             console.error('[MissionAdd] handleTap failed:', error)
         } finally {
@@ -93,10 +99,22 @@ Page({
     ownerOptions: [],
     selectedOwnerOpenid: '',
     currentOpenid: '',
+    subscribeTemplateId: SUBSCRIBE_TEMPLATE_ID,
+    subscribeStatus: 'unknown',
+    subscribeKeep: false,
+    isCheckingSubscribe: false,
+    isRequestingSubscribe: false,
+    remindEnabled: false,
+    remindDate: '',
+    remindTime: '',
+    minRemindDate: '',
+    checkFlag: wx.getStorageSync('checkFlag') || false,
   },
 
   async onLoad() {
     await this.initOwnerOptions()
+    this.initReminderDefaults()
+    await this.refreshSubscribeStatus()
   },
 
   async initOwnerOptions() {
@@ -123,7 +141,9 @@ Page({
         ownerOptions,
         selectedOwnerOpenid: defaultOwner,
         currentOpenid: currentUser.openid,
+        checkFlag: !!currentUser.check_flag,
       })
+      this.syncCheckFlag(!!currentUser.check_flag)
     } catch (error) {
       console.error('[MissionAdd] initOwnerOptions failed:', error)
       // 使用默认值
@@ -140,6 +160,162 @@ Page({
         currentOpenid: ownerOptions[0]?.openid || '',
       })
     }
+  },
+
+  initReminderDefaults() {
+    const now = new Date()
+    const minDate = this.formatDate(now)
+    const nextHour = new Date(now)
+    this.setData({
+      minRemindDate: minDate,
+      remindDate: '',
+      remindTime: this.formatTime(nextHour)
+    })
+  },
+
+  formatDate(date) {
+    const year = date.getFullYear()
+    const month = `${date.getMonth() + 1}`.padStart(2, '0')
+    const day = `${date.getDate()}`.padStart(2, '0')
+    return `${year}-${month}-${day}`
+  },
+
+  formatTime(date) {
+    const hours = `${date.getHours()}`.padStart(2, '0')
+    const minutes = `${date.getMinutes()}`.padStart(2, '0')
+    return `${hours}:${minutes}`
+  },
+
+  syncCheckFlag(flag) {
+    const normalized = !!flag
+    wx.setStorageSync('checkFlag', normalized)
+    this.setData({ checkFlag: normalized })
+  },
+
+  onReminderToggle(e) {
+    const enabled = !!e.detail.value
+    this.setData({ remindEnabled: enabled })
+    if (enabled && !this.data.remindDate) {
+      const today = this.formatDate(new Date())
+      this.setData({ remindDate: today })
+    }
+  },
+
+  onReminderDateChange(e) {
+    this.setData({ remindDate: e.detail.value })
+  },
+
+  onReminderTimeChange(e) {
+    this.setData({ remindTime: e.detail.value })
+  },
+
+  combineReminderDateTime(dateStr, timeStr) {
+    if (!dateStr || !timeStr) {
+      return null
+    }
+    const dateTimeStr = `${dateStr} ${timeStr}`
+    const timestamp = Date.parse(dateTimeStr.replace(/-/g, '/'))
+    if (Number.isNaN(timestamp)) {
+      return null
+    }
+    return new Date(timestamp).toISOString()
+  },
+
+  fetchSubscribeSetting() {
+    return new Promise((resolve, reject) => {
+      wx.getSetting({
+        withSubscriptions: true,
+        success: resolve,
+        fail: reject,
+      })
+    })
+  },
+
+  extractKeepFromSetting(setting) {
+    const templateId = this.data.subscribeTemplateId
+    const itemSettings = setting?.subscriptionsSetting?.itemSettings || {}
+    return Object.prototype.hasOwnProperty.call(itemSettings, templateId)
+  },
+
+  async persistSubscribeStatus(status, keep, scene) {
+    try {
+      const response = await api.updateSubscribeStatus({
+        template_id: this.data.subscribeTemplateId,
+        status,
+        keep,
+        scene,
+      })
+      if (response && Object.prototype.hasOwnProperty.call(response, 'check_flag')) {
+        this.syncCheckFlag(response.check_flag)
+      }
+    } catch (error) {
+      console.warn('[MissionAdd] persistSubscribeStatus failed:', error)
+    }
+  },
+
+  async refreshSubscribeStatus() {
+    if (this.data.isCheckingSubscribe) {
+      return this.data.subscribeStatus
+    }
+    this.setData({ isCheckingSubscribe: true })
+    try {
+      const setting = await this.fetchSubscribeSetting()
+      const status = setting?.subscriptionsSetting?.itemSettings?.[this.data.subscribeTemplateId] || 'unset'
+      const keep = this.extractKeepFromSetting(setting)
+      this.setData({
+        subscribeStatus: status,
+        subscribeKeep: keep
+      })
+      await this.persistSubscribeStatus(status, keep, 'mission_add_refresh')
+      return status
+    } catch (error) {
+      console.error('[MissionAdd] refreshSubscribeStatus failed:', error)
+      this.setData({ subscribeStatus: 'unknown' })
+      return 'unknown'
+    } finally {
+      this.setData({ isCheckingSubscribe: false })
+    }
+  },
+
+  async requestSubscribeMessage() {
+    if (this.data.isRequestingSubscribe) {
+      return false
+    }
+    this.setData({ isRequestingSubscribe: true })
+    try {
+      const templateId = this.data.subscribeTemplateId
+      const result = await new Promise((resolve, reject) => {
+        wx.requestSubscribeMessage({
+          tmplIds: [templateId],
+          success: resolve,
+          fail: reject,
+        })
+      })
+      const status = result?.[templateId] || 'unknown'
+      const setting = await this.fetchSubscribeSetting()
+      const keep = this.extractKeepFromSetting(setting)
+      this.setData({
+        subscribeStatus: status,
+        subscribeKeep: keep
+      })
+      await this.persistSubscribeStatus(status, keep, 'mission_add_request')
+      if (status === 'accept') {
+        wx.showToast({ title: '已授权提醒', icon: 'success' })
+        return true
+      }
+      wx.showToast({ title: '未开启提醒', icon: 'none' })
+      return false
+    } catch (error) {
+      console.error('[MissionAdd] requestSubscribeMessage failed:', error)
+      wx.showToast({ title: '授权失败', icon: 'none' })
+      return false
+    } finally {
+      this.setData({ isRequestingSubscribe: false })
+    }
+  },
+
+  async ensureSubscriptionPermission() {
+    return this.requestSubscribeMessage()
   },
 
   //数据输入填写表单
@@ -227,6 +403,36 @@ Page({
       })
       return false
     }
+    let remindAt = null
+    if (this.data.remindEnabled) {
+      if (!this.data.remindDate || !this.data.remindTime) {
+        wx.showToast({
+          title: '请选择提醒时间',
+          icon: 'error',
+          duration: 2000
+        })
+        return false
+      }
+      const remindTimestamp = Date.parse(`${this.data.remindDate} ${this.data.remindTime}`.replace(/-/g, '/'))
+      if (Number.isNaN(remindTimestamp)) {
+        wx.showToast({
+          title: '提醒时间无效',
+          icon: 'error',
+          duration: 2000
+        })
+        return false
+      }
+      if (remindTimestamp <= Date.now()) {
+        wx.showToast({
+          title: '提醒需晚于当前时间',
+          icon: 'error',
+          duration: 2000
+        })
+        return false
+      }
+      const localDate = new Date(remindTimestamp)
+      remindAt = this.formatLocalDateTime(localDate)
+    }
     
     wx.showLoading({
         title: '提交中...',
@@ -234,12 +440,18 @@ Page({
     })
     
     try{
-        await api.createMission({
+        const payload = {
           title: this.data.title,
           description: this.data.desc,
           reward_credit: this.data.credit,
           owner_openid: this.data.selectedOwnerOpenid, // 后端支持通过 openid 指定 owner
-        })
+        }
+
+        if (remindAt) {
+          payload.remind_at = remindAt
+        }
+        
+        await api.createMission(payload)
         
         wx.hideLoading()
         wx.showToast({
@@ -265,6 +477,7 @@ Page({
 
   // 重置所有表单项
   resetMission() {
+    this.initReminderDefaults()
     this.setData({
       title: '',
       desc: '',
@@ -272,6 +485,17 @@ Page({
       presetIndex: 0,
       list: getApp().globalData.collectionMissionList,
       selectedOwnerOpenid: this.data.currentOpenid || this.data.ownerOptions[0]?.openid || '',
+      remindEnabled: false,
     })
+  },
+
+  formatLocalDateTime(date) {
+    const year = date.getFullYear()
+    const month = `${date.getMonth() + 1}`.padStart(2, '0')
+    const day = `${date.getDate()}`.padStart(2, '0')
+    const hours = `${date.getHours()}`.padStart(2, '0')
+    const minutes = `${date.getMinutes()}`.padStart(2, '0')
+    const seconds = `${date.getSeconds()}`.padStart(2, '0')
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   }
 })

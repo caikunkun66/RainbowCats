@@ -23,6 +23,30 @@
         </label>
       </radio-group>
     </view>
+    <view class="form-cell reminder-cell">
+      <view class="reminder-header">
+        <view class="form-cell_title">⏰定时提醒</view>
+        <switch class="reminder-switch"
+                checked="{{remindEnabled}}"
+                bindchange="onReminderToggle" />
+      </view>
+      <view class="reminder-pickers {{remindEnabled ? '' : 'disabled'}}">
+        <picker mode="date"
+                value="{{remindDate}}"
+                start="{{minRemindDate}}"
+                disabled="{{!remindEnabled}}"
+                bindchange="onReminderDateChange">
+          <view class="picker-value">{{remindDate || '选择日期'}}</view>
+        </picker>
+        <picker mode="time"
+                value="{{remindTime}}"
+                disabled="{{!remindEnabled}}"
+                bindchange="onReminderTimeChange">
+          <view class="picker-value">{{remindTime || '选择时间'}}</view>
+        </picker>
+      </view>
+      <view class="reminder-tip">将在指定时间向双方发送完成提醒</view>
+    </view>
     <view class="form-cell">
       <view class="form-cell_title">💰积分奖励</view>
       <view class="credit-input-row">
@@ -34,8 +58,11 @@
 
   <view class="footer">
     <view class="reset" bindtap="resetMission">重置</view>
-    <view class="save {{isSaving ? 'disabled' : ''}}" bindtap="handleTap">
+    <button class="save {{isSaving ? 'disabled' : ''}}"
+            bindtap="handleTap"
+            hover-class="none"
+            type="default">
       {{isSaving ? '提交中...' : '保存'}}
-    </view>
+    </button>
   </view>
 </view>

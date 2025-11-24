@@ -1,4 +1,4 @@
-const BASE_URL = 'https://76614b38.r6.cpolar.top/api/v1'
+const BASE_URL = 'https://caikunkun.icu/api/v1'
 
 function getToken() {
   return wx.getStorageSync('token') || ''
