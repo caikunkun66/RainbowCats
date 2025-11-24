@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Mission extends Model
 {
     protected $table = 'missions';
+
     protected $fillable = [
         'legacy_id',
         'owner_id',
@@ -25,6 +27,15 @@ class Mission extends Model
         'remind_at' => 'datetime',
     ];
 
+    protected static function booted()
+    {
+        static::deleting(function (Mission $mission) {
+            Notification::where('status', 'pending')
+                ->where('payload->mission_id', $mission->id)
+                ->delete();
+        });
+    }
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
@@ -35,6 +46,3 @@ class Mission extends Model
         return $this->hasMany(MissionLog::class);
     }
 }
-
-
-
