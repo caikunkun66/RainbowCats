@@ -6,19 +6,21 @@ Page({
     if (this.data.isSaving) {
       return
     }
-    this.data.isSaving = true
-    this.setData({
-      isSaving: true
-    })
+
+    const setSaving = (value) => {
+      this.setData({isSaving: value})
+    }
+
+    setSaving(true)
     try {
-      await this.saveItem()
+      const saved = await this.saveItem()
+      if (!saved) {
+        setSaving(false)
+      }
+      // 成功时保持按钮禁用，直到页面返回
     } catch (error) {
       console.error('[MarketAdd] handleTap failed:', error)
-    } finally {
-      this.data.isSaving = false
-      this.setData({
-        isSaving: false
-      })
+      setSaving(false)
     }
   },
   //保存正在编辑的商品

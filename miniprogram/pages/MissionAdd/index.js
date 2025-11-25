@@ -14,19 +14,20 @@ Page({
             console.warn('[MissionAdd] ensureSubscriptionPermission failed:', error)
         }
 
-        this.data.isSaving = true
-        this.setData({
-            isSaving: true
-        })
+        const setSaving = (value) => {
+            this.setData({ isSaving: value })
+        }
+
+        setSaving(true)
         try {
-            await this.saveMission()
+            const saved = await this.saveMission()
+            if (!saved) {
+                setSaving(false)
+            }
+            // 成功时保持按钮禁用，等待返回上一页
         } catch (error) {
             console.error('[MissionAdd] handleTap failed:', error)
-        } finally {
-            this.data.isSaving = false
-            this.setData({
-                isSaving: false
-            })
+            setSaving(false)
         }
   },  
   //保存正在编辑的任务
