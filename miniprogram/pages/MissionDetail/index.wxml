@@ -13,7 +13,7 @@
       <view class="mission-info_desc">此任务由{{from}}申请执行，由{{to}}监督确认。</view>
     </view>
     <view class="form-cell">
-      <view class="mission-info_title">💰 奖励力度：{{mission.credit}} 积分</view>
+      <view class="mission-info_title">💰 奖励力度：{{mission.reward_credit}} 积分</view>
       <progress percent="{{creditPercent}}" border-radius="5" font-size="8" duration="10" color="lightsalmon" active stroke-width="7"> 
         <view class="mission-info_credit">{{maxCredit}} 积分</view>
       </progress>
@@ -24,7 +24,7 @@
     </view>
     <view class="form-cell">
       <view class="mission-info_title">📝 任务详情</view>
-      <view class="mission-info_desc">{{mission.desc}}</view>
+      <view class="mission-info_desc">{{mission.description}}</view>
     </view>
   </view>
 </view>

@@ -41,14 +41,19 @@ Page({
             const currentUser = await api.getCurrentUser()
             const partnerResult = await api.getPartner()
             
+            const partner = partnerResult.partner || null
+            const isCurrentAdmin = currentUser.role === 'admin'
+            const userAData = isCurrentAdmin ? currentUser : partner
+            const userBData = isCurrentAdmin ? partner : currentUser
+
             this.setData({
-                userA: currentUser.nickname || '我',
-                userB: partnerResult.partner ? (partnerResult.partner.nickname || '伙伴') : '未绑定',
+                userA: userAData ? (userAData.nickname || (isCurrentAdmin ? '我' : '伙伴')) : '未绑定',
+                userB: userBData ? (userBData.nickname || (isCurrentAdmin ? '伙伴' : '我')) : '未绑定',
                 currentUser: currentUser,
-                partner: partnerResult.partner,
-                // 直接使用当前接口结果设置积分和邀请码，避免额外请求
-                creditA: currentUser.credit || 0,
-                creditB: partnerResult.partner ? (partnerResult.partner.credit || 0) : 0,
+                partner: partner,
+                // 由角色固定 A/B 的积分
+                creditA: userAData ? (userAData.credit || 0) : 0,
+                creditB: userBData ? (userBData.credit || 0) : 0,
                 inviteCode: currentUser.invite_code || '',
                 checkFlag: !!currentUser.check_flag,
             })
