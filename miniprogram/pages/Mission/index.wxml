@@ -31,6 +31,14 @@ style="height: 200px; width: 100%; background: white; ">
       </view>
   </view>
 
+  <view class="swipe-tip-card" wx:if="{{showSwipeTip}}">
+    <view class="swipe-tip-content">
+      <text class="swipe-tip-icon">💡</text>
+      <text class="swipe-tip-text">左滑任务可以标记完成、星标或删除</text>
+    </view>
+    <view class="swipe-tip-close" bindtap="closeSwipeTip">✕</view>
+  </view>
+
   <view class="form-group_label">未完成<mp-badge content="{{unfinishedMissions.length}}" style="margin-left: 5px;" /></view>
   <view class="form-group" wx:if="{{unfinishedMissions.length > 0}}" 
   style="z-index: 0; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.05), 0 6px 20px 0 rgba(0, 0, 0, 0.05);">

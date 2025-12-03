@@ -21,6 +21,7 @@ Page({
       {extClass: 'removeBtn', text: '删除', src: 'Images/icon_del.svg'}
     ],
     isFinishing: false,
+    showSwipeTip: false,
   },
 
   //页面加载时运行
@@ -35,6 +36,9 @@ Page({
       this.setData({allMissions: missions})
       this.filterMission()
       this.getScreenSize()
+      
+      // 检查是否需要显示左滑提示
+      this.checkSwipeTip()
     } catch (error) {
       console.error('[Mission] onShow failed:', error)
       this.setData({allMissions: []})
@@ -349,5 +353,19 @@ Page({
       }
       this.setData({isFinishing: false})
     }
+  },
+
+  // 检查是否需要显示左滑提示
+  checkSwipeTip() {
+    const hasSeenTip = wx.getStorageSync('hasSeenSwipeTip')
+    if (!hasSeenTip && this.data.unfinishedMissions.length > 0) {
+      this.setData({showSwipeTip: true})
+    }
+  },
+
+  // 关闭左滑提示
+  closeSwipeTip() {
+    this.setData({showSwipeTip: false})
+    wx.setStorageSync('hasSeenSwipeTip', true)
   },
 })
