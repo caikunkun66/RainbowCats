@@ -19,6 +19,7 @@ Page({
         userB: '',
         partner: null,
         inviteCode: '',
+        currentUser: null,
         subscribeTemplateId: SUBSCRIBE_TEMPLATE_ID,
         subscribeStatus: 'unknown',
         subscribeStatusText: SUBSCRIBE_STATUS_TEXT.unknown,
@@ -56,6 +57,7 @@ Page({
                 creditB: userBData ? (userBData.credit || 0) : 0,
                 inviteCode: currentUser.invite_code || '',
                 checkFlag: !!currentUser.check_flag,
+                isCurrentUserA: isCurrentAdmin, // 当前用户是A还是B
             })
             this.syncCheckFlag(!!currentUser.check_flag)
             // 同步到全局缓存，供其他页面复用
@@ -125,6 +127,57 @@ Page({
         } catch (error) {
             wx.showToast({
                 title: '复制失败',
+                icon: 'none',
+            })
+        }
+    },
+
+    showEditNicknameDialog() {
+        const currentNickname = this.data.currentUser?.nickname || ''
+        wx.showModal({
+            title: '修改昵称',
+            editable: true,
+            placeholderText: '请输入新昵称',
+            content: currentNickname,
+            success: async (res) => {
+                if (res.confirm && res.content) {
+                    await this.updateNickname(res.content.trim())
+                }
+            },
+        })
+    },
+
+    async updateNickname(nickname) {
+        if (!nickname || nickname.length === 0) {
+            wx.showToast({
+                title: '昵称不能为空',
+                icon: 'none',
+            })
+            return
+        }
+
+        if (nickname.length > 50) {
+            wx.showToast({
+                title: '昵称不能超过50个字符',
+                icon: 'none',
+            })
+            return
+        }
+
+        wx.showLoading({title: '修改中...'})
+        try {
+            await api.updateProfile(nickname)
+            wx.hideLoading()
+            wx.showToast({
+                title: '修改成功',
+                icon: 'success',
+            })
+            // 重新加载数据以更新昵称显示
+            await this.loadUserData()
+        } catch (error) {
+            wx.hideLoading()
+            wx.showToast({
+                title: error.message || '修改失败',
                 icon: 'none',
             })
         }

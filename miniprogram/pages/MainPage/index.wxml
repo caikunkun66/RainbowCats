@@ -12,12 +12,14 @@
         <view class="slide">
         <image class="credit-avatar" src="../Mission/Images/MissionA.png" mode="aspectFit" />
         <view class="title">{{userA}}的积分：{{creditA}}</view>
+        <view wx:if="{{isCurrentUserA}}" class="edit-icon" bindtap="showEditNicknameDialog">✏️</view>
         </view>
     </view>
     <view class="form-cell">
         <view class="slide">
         <image class="credit-avatar" src="../Mission/Images/MissionB.png" mode="aspectFit" />
         <view class="title">{{userB}}的积分：{{creditB}}</view>
+        <view wx:if="{{!isCurrentUserA}}" class="edit-icon" bindtap="showEditNicknameDialog">✏️</view>
         </view>
     </view>
 </view>
@@ -37,17 +39,17 @@
   </view>
 </view>
 
-<view class="form-group_label">👥 伙伴绑定</view>
+<view class="form-group_label">👥 卡比绑定</view>
 <view class="form-group" style="box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.05), 0 6px 20px 0 rgba(0, 0, 0, 0.05);">
   <view class="form-cell" wx:if="{{!partner}}">
     <view class="slide">
-      <view class="title">未绑定伙伴</view>
-      <button class="bind-btn" size="mini" bindtap="showBindDialog">绑定伙伴</button>
+      <view class="title">未绑定卡比</view>
+      <button class="bind-btn" size="mini" bindtap="showBindDialog">绑定卡比</button>
     </view>
   </view>
   <view class="form-cell" wx:if="{{partner}}">
     <view class="slide">
-      <view class="title">已绑定：{{partner.nickname || '伙伴'}}</view>
+      <view class="title">已绑定：{{partner.nickname || '卡比'}}</view>
     </view>
   </view>
   <view class="form-cell" wx:if="{{inviteCode}}">
