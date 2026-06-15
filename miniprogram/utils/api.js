@@ -1,4 +1,4 @@
-const BASE_URL = 'https://ytgd7c9iqzd0.ngrok.xiaomiqiu123.top/api/v1'
+const BASE_URL = 'https://nack2pfftyas.ngrok.xiaomiqiu123.top/api/v1'
 
 function getToken() {
   return wx.getStorageSync('token') || ''
@@ -107,7 +107,7 @@ function request(path, options = {}) {
   })
 }
 
-export const api = {
+const api = {
   login(code) {
     return loginRequest(code)
   },
@@ -187,11 +187,13 @@ export const api = {
       data: status,
     })
   },
-  updateProfile(nickname) {
+    updateProfile(nickname) {
     return request('/users/me', {
       method: 'PUT',
       data: {nickname},
     })
   },
 }
+
+module.exports = {api}
 

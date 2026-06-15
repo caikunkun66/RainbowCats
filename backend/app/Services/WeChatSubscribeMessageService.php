@@ -50,7 +50,7 @@ class WeChatSubscribeMessageService
     protected function postWithToken(string $url, array $payload, bool $retried = false): array
     {
         $token = $this->getAccessToken($retried);
-        $response = Http::post(sprintf('%s?access_token=%s', $url, $token), $payload);
+        $response = Http::withOptions(['verify' => false])->post(sprintf('%s?access_token=%s', $url, $token), $payload);
 
         if (!$response->successful()) {
             Log::error('WeChat API request failed', [
@@ -84,7 +84,7 @@ class WeChatSubscribeMessageService
             return Cache::get($this->tokenCacheKey);
         }
 
-        $response = Http::get('https://api.weixin.qq.com/cgi-bin/token', [
+        $response = Http::withOptions(['verify' => false])->get('https://api.weixin.qq.com/cgi-bin/token', [
             'grant_type' => 'client_credential',
             'appid' => $this->appId,
             'secret' => $this->appSecret,

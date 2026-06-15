@@ -63,7 +63,7 @@ class WeChatAuthService
             'grant_type' => 'authorization_code',
         ];
 
-        $response = Http::get($url, $params);
+        $response = Http::withOptions(['verify' => false])->get($url, $params);
 
         if (!$response->successful()) {
             Log::error('WeChat code2session failed', [
